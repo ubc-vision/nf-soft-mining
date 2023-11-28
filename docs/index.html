@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="description"
+      content="Accelerating Neural Field Training via Soft Mining."
+    />
+    <meta
+      name="keywords"
+      content="Accelerating Neural Field Training via Soft Mining"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Accelerating Neural Field Training via Soft Mining</title>
+
+    <link rel="stylesheet" href="./static/css/bulma.min.css" />
+    <link rel="stylesheet" href="./static/css/slide.css" /> 
+    <link rel="stylesheet" href="./static/css/bulma-carousel.min.css" /> 
+    <link rel="stylesheet" href="./static/css/bulma-slider.min.css" /> 
+    <link rel="stylesheet" href="./static/css/fontawesome.all.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css"
+    />
+    <link rel="stylesheet" href="./static/css/index.css" />
+    <link rel="icon" href="./static/images/favicon.svg" />
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script defer src="./static/js/fontawesome.all.min.js"></script>
+    <script src="./static/js/bulma-carousel.min.js"></script>
+    <script src="./static/js/bulma-slider.min.js"></script>
+    <script src="./static/js/index.js"></script>
+    <script src="./static/js/slide.js"></script>
+  </head>
+  <body>
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+      <div class="navbar-brand">
+        <a
+          role="button"
+          class="navbar-burger"
+          aria-label="menu"
+          aria-expanded="false"
+        >
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">
+            Accelerating Neural Field Training via Soft Mining
+          </h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://scholar.google.ca/citations?user=v8O4LMYAAAAJ&hl=en">Shakiba Kheradmand</a><sup>1</sup>,</span>
+              <span class="author-block">
+                <a href="http://drebain.com/"> Daniel Rebain</a><sup>1</sup>,</span>
+              <span class="author-block">
+              <a href="https://hippogriff.github.io/"> Gopal Sharma</a><sup>1</sup>,</span>
+            <span class="author-block">
+              <a href="http://www.hossamisack.com/">Hossam Isack</a><sup>2</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://abhishekkar.info/">Abhishek Kar</a><sup>2</sup>
+            </span>
+            <br>
+            <span class="author-block">
+              <a href="https://taiya.github.io/">Andrea Tagliasacchi</a><sup>2, 3, 4</sup>
+            </span>
+            <span class="author-block">
+              <a href="https://www.cs.ubc.ca/~kmyi/">Kwang Moo Yi</a><sup>1</sup>
+            </span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup>1</sup>University of British Columbia</span>
+            <span class="author-block"><sup>2</sup>Google DeepMind</span>
+            <br>
+            <span class="author-block"><sup>3</sup>Simon Fraser University</span>
+            <span class="author-block"><sup>4</sup>University of Toronto</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- Paper Link. -->
+              <span class="link-block">
+                <a
+                  href=""
+                  class="external-link button is-normal is-rounded is-dark"
+                >
+                  <span class="icon">
+                    <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                    <svg class="svg-inline--fa fa-github fa-w-16" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="github" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512" data-fa-i2svg=""><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"></path></svg><!-- <i class="fab fa-github"></i> Font Awesome fontawesome.com -->
+                  </span>
+                  <span>Code</span>
+                </a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="centered-line2"></div>      
+
+    <section class="section">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+            <h2 class="title is-3">Abstract</h2>
+            <div class="content has-text-justified">
+                <p>
+                  We present an approach to accelerate Neural Field training by efficiently selecting sampling locations. 
+                  While Neural Fields have recently become popular, it is often trained by uniformly sampling the training domain, or through handcrafted heuristics.
+                  We show that improved convergence and final training quality can be achieved by a soft mining technique based on importance sampling: rather than either considering or ignoring a pixel completely, we weigh the corresponding loss by a scalar.
+                  To implement our idea we use Langevin Monte-Carlo sampling.
+                  We show that by doing so, regions with higher error are being selected more frequently, leading to more than 2x improvement in convergence speed.
+                </p>
+              </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="hero teaser">
+      <div class="container is-max-desktop">
+        <div class="hero-body">
+          <img
+            id="teaser"
+            src="./static/images/teaser.png"
+            alt="Descriptive Text"
+            style="width: 100%; height: auto"
+          />
+          <h2 class="subtitle has-text-justified">
+            <strong>Teaser –</strong> we introduce soft mining to accelerate neural field training. 
+            When applied to Neural Radiance Field (NeRF) training, our method significantly improves convergence.
+            We visualize the error maps (blue denotes low error and red denotes high error) and the rendered novel views for uniform sampling and our method.
+            We plot the convergence showing the Peak Signal-to-Noise Ratio (PSNR) for the corresponding scene. 
+            We render both images at 1k iterations of training, specified by the red dashed line in the (right) graph.
+            Our method achieves the same PSNR significantly faster than the baselines.
+          </h2>
+        </div>
+      </div>
+    </section>
+    <div class="centered-line"></div>
+    <!-- <section class="vids"> -->
+    <div class="videos-container">
+        <div class="video-container-2">
+            <video id="video5" class="video-hover" autoplay muted loop playsinline controls>
+            <source src="./static/videos/mic_good_video_3.mov" type="video/mp4" />
+            </video>
+            <h2 class="subtitle has-text-justified">
+            <strong>NeRF Example -  Mic –</strong>
+            The evolution of test PSNR during the training of our Soft Mining Sampling technique compared to 
+            the Uniform Sampling baseline is illustrated using the 'Microphone' image from the 
+            NeRF Synthetic dataset. The orange curve indicates the test PSNR of the uniform sampling 
+            baseline, while the blue curve represents the test PSNR of our method. The yellow arrow indicates the 
+            current position on the curve. 
+            </h2>
+        </div>
+    </div>
+    <div class="centered-line"></div>
+    <div class="videos-container">
+        <!-- Video 2 Container -->
+        <div class="video-container-2">
+            <video id="video2" class="video-hover" autoplay muted loop playsinline controls>
+                <source src="./static/videos/lego_good_video_3.mov" type="video/mp4" />
+            </video>
+            <h2 class="subtitle has-text-justified">
+                <strong>NeRF Example - Lego –</strong> 
+                The evolution of test PSNR during the training of our Soft Mining Sampling technique compared to 
+            the Uniform Sampling baseline is illustrated using the 'Lego' image from the 
+            NeRF Synthetic dataset. The orange curve indicates the test PSNR of the uniform sampling 
+            baseline, while the blue curve represents the test PSNR of our method. The yellow arrow indicates the 
+            current position on the curve. 
+            </h2>
+        </div>
+    </div>
+    <div class="centered-line"></div>
+    <div class="videos-container">
+      <!-- Video 2 Container -->
+      <div class="video-container-2">
+          <video id="video2" class="video-hover" autoplay muted loop playsinline controls>
+              <source src="./static/videos/chair_good_video_3.mov" type="video/mp4" />
+          </video>
+          <h2 class="subtitle has-text-justified">
+              <strong>NeRF Example - Chair –</strong> 
+              The evolution of test PSNR during the training of our Soft Mining Sampling technique compared to 
+          the Uniform Sampling baseline is illustrated using the 'Chair' image from the 
+          NeRF Synthetic dataset. The orange curve indicates the test PSNR of the uniform sampling 
+          baseline, while the blue curve represents the test PSNR of our method. The yellow arrow indicates the 
+          current position on the curve. 
+          </h2>
+      </div>
+  </div>
+  <div class="centered-line"></div>
+    <div class="videos-container">
+        <!-- Video 2 Container -->
+        <div class="video-container-2">
+            <video id="video2" class="video-hover" autoplay muted loop playsinline controls>
+                <source src="./static/videos/trex_good_video_3.mov" type="video/mp4" />
+            </video>
+            <h2 class="subtitle has-text-justified">
+                <strong>NeRF Example - Trex –</strong> 
+                The evolution of test PSNR during the training of our Soft Mining Sampling technique compared to 
+          the Uniform Sampling baseline is illustrated using the 'Trex' image from the 
+          LLFF dataset. The orange curve indicates the test PSNR of the uniform sampling 
+          baseline, while the blue curve represents the test PSNR of our method. The yellow arrow indicates the 
+          current position on the curve.
+            </h2>
+        </div>
+    </div>
+    <div class="centered-line"></div>
+    <div class="videos-container">
+        <!-- Video 2 Container -->
+        <div class="video-container-2">
+            <video id="video2" class="video-hover" autoplay muted loop playsinline controls>
+                <source src="./static/videos/fortress_good_video_3.mov" type="video/mp4" />
+            </video>
+            <h2 class="subtitle has-text-justified">
+                <strong>NeRF Example - Fortress –</strong> 
+                The evolution of test PSNR during the training of our Soft Mining Sampling technique compared to 
+          the Uniform Sampling baseline is illustrated using the 'Fortress' image from the 
+          LLFF dataset. The orange curve indicates the test PSNR of the uniform sampling 
+          baseline, while the blue curve represents the test PSNR of our method. The yellow arrow indicates the 
+          current position on the curve. 
+            </h2>
+        </div>
+    </div>
+    <div class="centered-line"></div>
+    <div class="videos-container">
+      <!-- Video 2 Container -->
+      <div class="video-container-2">
+          <video id="video2" class="video-hover" autoplay muted loop playsinline controls>
+              <source src="./static/videos/fern_good_video_3.mov" type="video/mp4" />
+          </video>
+          <h2 class="subtitle has-text-justified">
+              <strong>NeRF Example - Fern -</strong> 
+              The evolution of test PSNR during the training of our Soft Mining Sampling technique compared to 
+        the Uniform Sampling baseline is illustrated using the 'Fern' image from the 
+        LLFF dataset. The orange curve indicates the test PSNR of the uniform sampling 
+        baseline, while the blue curve represents the test PSNR of our method. The yellow arrow indicates the 
+        current position on the curve. 
+          </h2>
+      </div>
+  </div>
+  <div class="centered-line"></div>
+    <div class="videos-container">
+      <!-- Video 1 Container -->
+      <div class="video-container-2">
+        <video id="video1" class="video-hover" autoplay muted loop playsinline controls>
+          <source src="./static/videos/all_tokyo_512_1.mov" type="video/mp4" />
+        </video>
+        <h2 class="subtitle has-text-justified">
+          <strong>2D Image Fitting Example - Tokyo –</strong>
+          The evolution of test PSNR during the training of our Soft Mining Sampling technique 
+          compared to  the Uniform Sampling baseline is illustrated using the 'Tokyo' image for 
+          2D image fitting application with a batch size of 512. The orange curve indicates the test PSNR of the uniform sampling 
+          baseline, while the blue curve represents the test PSNR of our method. The yellow arrow indicates
+          the current position on the curve. The samples along with the error map is also provided.
+        </h2>
+      </div>
+    </div>
+
+    <div class="centered-line"></div>
+
+    <div class="videos-container">
+      <div class="video-container-2">
+        <video id="video6" class="video-hover" autoplay muted loop playsinline controls>
+          <source src="./static/videos/all_pluto_512_1.mov" type="video/mp4" />
+        </video>
+        <h2 class="subtitle has-text-justified">
+          <strong>2D Image Fitting Example - Pluto –</strong> 
+          The evolution of test PSNR during the training of our Soft Mining Sampling technique compared to  
+          the Uniform Sampling baseline is illustrated using the 'Pluto' image for 2D image fitting application with a batch size of 512. 
+          The orange curve indicates the test PSNR of the uniform sampling 
+          baseline, while the blue curve represents the test PSNR of our method. The yellow arrow indicates 
+          the current position on the curve. The samples along with the error map is also provided.
+        </h2>
+      </div>
+    </div>
+    </div>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="columns is-centered">
+          <div class="column is-8">
+            <div class="content">
+              <p>
+                This page is modified from
+                <a href="https://github.com/nerfies/nerfies.github.io"
+                  >Nerfies</a
+                >.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
