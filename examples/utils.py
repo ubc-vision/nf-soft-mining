@@ -223,7 +223,7 @@ def render_image_with_propnet(
             stratified=radiance_field.training,
             requires_grad=proposal_requires_grad,
         )
-        rgb, opacity, depth, extras = rendering(
+        rgb, opacity, depth, extra = rendering(
             t_starts,
             t_ends,
             ray_indices=None,
@@ -231,21 +231,32 @@ def render_image_with_propnet(
             rgb_sigma_fn=rgb_sigma_fn,
             render_bkgd=render_bkgd,
         )
-        chunk_results = [rgb, opacity, depth]
+        ray_indices = torch.arange(0, t_starts.shape[0], device=t_starts.device).repeat_interleave(t_starts.shape[1]).flatten()
+        unique_indices, inverse = torch.unique(ray_indices, sorted=True, return_inverse=True)
+        binnums = torch.bincount(inverse)
+        start_positions = torch.cat([torch.tensor([0], dtype=torch.int, device=ray_indices.device), torch.cumsum(binnums, 0)[:-1]])
+        ray_a = torch.stack([unique_indices.int(), start_positions.int(), binnums], dim=1)
+        
+        chunk_results = [rgb, opacity, depth, extra, ray_a]
         results.append(chunk_results)
 
-    colors, opacities, depths = collate(
+    colors, opacities, depths, extras, rays_a = collate(
         results,
         collate_fn_map={
             **default_collate_fn_map,
             torch.Tensor: lambda x, **_: torch.cat(x, 0),
         },
     )
+    distkwarg = {"ws": extras['weights'].flatten(),
+                 "deltas": (t_ends - t_starts).flatten(),
+                 "ts": t_starts.flatten(),
+                 "rays_a": rays_a}
     return (
         colors.view((*rays_shape[:-1], -1)),
         opacities.view((*rays_shape[:-1], -1)),
         depths.view((*rays_shape[:-1], -1)),
         extras,
+        distkwarg
     )
 
 

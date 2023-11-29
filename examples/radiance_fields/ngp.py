@@ -184,6 +184,8 @@ class NGPRadianceField(torch.nn.Module):
         if self.use_viewdirs:
             dir = (dir + 1.0) / 2.0
             d = self.direction_encoding(dir.reshape(-1, dir.shape[-1]))
+            d = (d - d.mean(-1, keepdim=True)) / (d.std(-1, keepdim=True) + torch.finfo(torch.float16).eps)
+            embedding = (embedding - embedding.mean(-1, keepdim=True)) / (embedding.std(-1, keepdim=True) + torch.finfo(torch.float16).eps )
             h = torch.cat([d, embedding.reshape(-1, self.geo_feat_dim)], dim=-1)
         else:
             h = embedding.reshape(-1, self.geo_feat_dim)

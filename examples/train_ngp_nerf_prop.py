@@ -14,6 +14,8 @@ import torch.nn.functional as F
 import tqdm
 from lpips import LPIPS
 from radiance_fields.ngp import NGPDensityField, NGPRadianceField
+from losses import NeRFLoss
+from schedulers import create_scheduler
 
 from examples.utils import (
     MIPNERF360_UNBOUNDED_SCENES,
@@ -31,7 +33,7 @@ parser.add_argument(
     "--data_root",
     type=str,
     # default=str(pathlib.Path.cwd() / "data/360_v2"),
-    default=str(pathlib.Path.cwd() / "data/nerf_synthetic"),
+    default=str("../../data/nerf_synthetic"),
     help="the root dir of the dataset",
 )
 parser.add_argument(
@@ -52,6 +54,27 @@ parser.add_argument(
     "--test_chunk_size",
     type=int,
     default=8192,
+)
+parser.add_argument(
+    "--sampling_type",
+    type=str,
+    choices=["uniform", "lmc"],
+    default="uniform",
+)
+parser.add_argument(
+    "--alpha",
+    type=float,
+    default=0.6,
+)
+parser.add_argument(
+    "--i_print",
+    type=int,
+    default=1000,
+)
+parser.add_argument(
+    "--scheduler",
+    type=str,
+    default="cosineannealing",
 )
 args = parser.parse_args()
 
@@ -109,7 +132,7 @@ else:
     near_plane = 2.0
     far_plane = 6.0
     # dataset parameters
-    train_dataset_kwargs = {}
+    train_dataset_kwargs = {"sampling_type": args.sampling_type}
     test_dataset_kwargs = {}
     # model parameters
     proposal_networks = [
@@ -153,22 +176,7 @@ prop_optimizer = torch.optim.Adam(
     eps=1e-15,
     weight_decay=weight_decay,
 )
-prop_scheduler = torch.optim.lr_scheduler.ChainedScheduler(
-    [
-        torch.optim.lr_scheduler.LinearLR(
-            prop_optimizer, start_factor=0.01, total_iters=100
-        ),
-        torch.optim.lr_scheduler.MultiStepLR(
-            prop_optimizer,
-            milestones=[
-                max_steps // 2,
-                max_steps * 3 // 4,
-                max_steps * 9 // 10,
-            ],
-            gamma=0.33,
-        ),
-    ]
-)
+prop_scheduler = create_scheduler(prop_optimizer, args.scheduler, max_steps, 1e-2)
 estimator = PropNetEstimator(prop_optimizer, prop_scheduler).to(device)
 
 grad_scaler = torch.cuda.amp.GradScaler(2**10)
@@ -179,28 +187,18 @@ optimizer = torch.optim.Adam(
     eps=1e-15,
     weight_decay=weight_decay,
 )
-scheduler = torch.optim.lr_scheduler.ChainedScheduler(
-    [
-        torch.optim.lr_scheduler.LinearLR(
-            optimizer, start_factor=0.01, total_iters=100
-        ),
-        torch.optim.lr_scheduler.MultiStepLR(
-            optimizer,
-            milestones=[
-                max_steps // 2,
-                max_steps * 3 // 4,
-                max_steps * 9 // 10,
-            ],
-            gamma=0.33,
-        ),
-    ]
-)
+scheduler = create_scheduler(optimizer, args.scheduler, max_steps, 1e-2)
 proposal_requires_grad_fn = get_proposal_requires_grad_fn()
 # proposal_annealing_fn = get_proposal_annealing_fn()
 
 lpips_net = LPIPS(net="vgg").to(device)
 lpips_norm_fn = lambda x: x[None, ...].permute(0, 3, 1, 2) * 2 - 1
 lpips_fn = lambda x, y: lpips_net(lpips_norm_fn(x), lpips_norm_fn(y)).mean()
+
+loss_fn = NeRFLoss()
+
+gradval = None
+lossperpix_prev = None
 
 # training
 tic = time.time()
@@ -211,7 +209,9 @@ for step in range(max_steps + 1):
     estimator.train()
 
     i = torch.randint(0, len(train_dataset), (1,)).item()
-    data = train_dataset[i]
+    # data = train_dataset[i]
+    data = train_dataset.__getitem__(i, net_grad=gradval, loss_per_pix=lossperpix_prev)
+
 
     render_bkgd = data["color_bkgd"]
     rays = data["rays"]
@@ -219,7 +219,7 @@ for step in range(max_steps + 1):
 
     proposal_requires_grad = proposal_requires_grad_fn(step)
     # render
-    rgb, acc, depth, extras = render_image_with_propnet(
+    rgb, acc, depth, extras, distkwargs = render_image_with_propnet(
         radiance_field,
         proposal_networks,
         estimator,
@@ -240,7 +240,28 @@ for step in range(max_steps + 1):
     )
 
     # compute loss
-    loss = F.smooth_l1_loss(rgb, pixels)
+    loss_d = loss_fn(rgb, pixels, acc, distkwargs)
+    loss_per_pix = loss_d['rgb'].mean(-1)
+    if 'opacity' in loss_d:
+        loss_per_pix = loss_per_pix + loss_d['opacity'].squeeze(-1)
+    if 'distorion' in loss_d:
+        loss_per_pix = loss_per_pix + loss_d['distortion']
+
+    if args.sampling_type in ["lmc"]:
+        imp_loss = torch.abs(rgb - pixels).mean(-1).detach()
+        if 'opacity' in loss_d:
+            imp_loss = (imp_loss + loss_d['opacity'].squeeze(-1)).detach()
+        if 'distorion' in loss_d:
+            imp_loss = imp_loss + loss_d['distortion'].detach()
+        correction = 1.0 / torch.clip(imp_loss, min=torch.finfo(torch.float16).eps).detach()
+        if args.alpha != 0:
+            r = min((step/1000), args.alpha)
+        else:
+            r = args.r
+        correction.pow_(r)
+        correction.clamp_(min=0.2, max=correction.mean()+correction.std())
+        loss_per_pix.mul_(correction) 
+    loss = loss_per_pix.mean()
 
     optimizer.zero_grad()
     # do not unscale it because we are using Adam.
@@ -248,7 +269,15 @@ for step in range(max_steps + 1):
     optimizer.step()
     scheduler.step()
 
-    if step % 10000 == 0:
+    if args.sampling_type == "lmc":
+        with torch.no_grad():            
+            net_grad = data['points_2d'].grad.detach()
+            loss_per_pix = loss_per_pix.detach()
+            net_grad = net_grad / ((grad_scaler._scale * (correction * loss_per_pix).unsqueeze(1))+ torch.finfo(net_grad.dtype).eps)
+            gradval = net_grad
+            lossperpix_prev = loss_per_pix
+
+    if step % args.i_print == 0:
         elapsed_time = time.time() - tic
         loss = F.mse_loss(rgb, pixels)
         psnr = -10.0 * torch.log(loss) / np.log(10.0)
@@ -259,7 +288,7 @@ for step in range(max_steps + 1):
             f"max_depth={depth.max():.3f} | "
         )
 
-    if step > 0 and step % max_steps == 0:
+    if step > 0 and (step % args.i_print == 0 or step % max_steps == 0):
         # evaluation
         radiance_field.eval()
         for p in proposal_networks:
@@ -276,7 +305,7 @@ for step in range(max_steps + 1):
                 pixels = data["pixels"]
 
                 # rendering
-                rgb, acc, depth, _, = render_image_with_propnet(
+                rgb, acc, depth, _, _ = render_image_with_propnet(
                     radiance_field,
                     proposal_networks,
                     estimator,
