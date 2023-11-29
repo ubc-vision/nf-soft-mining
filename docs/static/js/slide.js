@@ -14,3 +14,11 @@ document.addEventListener("DOMContentLoaded", function() {
     observer.observe(video);
   });
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+  let carousels = bulmaCarousel.attach('.results-carousel', {
+    autoplay: true,
+    autoplaySpeed: 10000,
+    loop: true,
+  });
+});

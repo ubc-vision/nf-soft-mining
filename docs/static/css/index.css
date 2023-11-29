@@ -112,15 +112,32 @@ body {
 .publication-body img {
 }
 
-.results-carousel .carousel-item {
-  display: flex;
-  justify-content: space-around; /* Adjust as needed */
-}
+.results-carousel {
+    display: flex;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .results-carousel .item {
+    flex: 0 0 100%;
+    max-width: 100%;
+    margin: 5px;
+    overflow: hidden;
+    border: 1px solid #bbb;
+    border-radius: 10px;
+    padding: 0;
+    font-size: 0;
+  }
+  
+  .results-carousel video {
+    margin: 0;
+    width: 100%; /* Make the video fill the width of the container */
+    height: auto;
+    object-fit: cover;
+  }
 
-.results-carousel .item {
-  width: calc(20% - 10px); /* Adjust width for 5 items */
-  /* Other styles... */
-}
+  
 
 .carousel-caption p {
   text-align: center;
@@ -204,7 +221,7 @@ video {
 }
 
 .video-container-2 {
-width: 60%; /* Adjusted to slightly less than 30% */
+width: 80%; /* Adjusted to slightly less than 30% */
 margin-right: 2%; /* Space between the videos */
 display: flex;
 flex-direction: column;
@@ -227,7 +244,7 @@ object-fit: cover;
   height: 10px; /* This controls the thickness of the line */
   background-color: blue; /* Choose the color of the line */
   margin: 0 auto; /* This centers the line horizontally */
-  margin-top: 10px; /* Space above the line */
+  margin-top: 40px; /* Space above the line */
   margin-bottom: 50px; /* Space below the line */
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);
   background: linear-gradient(to right, #1e5799, #2989d8, #207cca, #7db9e8, #207cca, #2989d8, #1e5799);
@@ -250,3 +267,20 @@ object-fit: cover;
 .subtitle {
   margin-top: 10px; /* Adjust the value to create more or less space */
 }
+
+.hero.is-light.is-small {
+    background-color: lightcyan;
+    width: 80%;
+    margin-left:10%;
+  }
+
+  .video {
+    width: 1280px;
+    height: auto;
+    object-fit: cover;
+  }
+
+  .container2 {
+    width: 100%;
+    max-width: none;
+  }
