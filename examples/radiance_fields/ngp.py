@@ -61,9 +61,10 @@ def contract_to_unisphere(
         dev = torch.clamp(dev, min=eps)
         return dev
     else:
-        x[mask] = (2 - 1 / mag[mask]) * (x[mask] / mag[mask])
-        x = x / 4 + 0.5  # [-inf, inf] is at [0, 1]
-        return x
+        y = x.clone()
+        y[mask] = (2 - 1 / mag[mask]) * (x[mask] / mag[mask])
+        y = y / 4 + 0.5  # [-inf, inf] is at [0, 1]
+        return y
 
 
 class NGPRadianceField(torch.nn.Module):
@@ -75,7 +76,7 @@ class NGPRadianceField(torch.nn.Module):
         num_dim: int = 3,
         use_viewdirs: bool = True,
         density_activation: Callable = lambda x: trunc_exp(x - 1),
-        unbounded: bool = False,
+        unbounded: int = 0,
         base_resolution: int = 16,
         max_resolution: int = 4096,
         geo_feat_dim: int = 15,
@@ -156,9 +157,9 @@ class NGPRadianceField(torch.nn.Module):
             )
 
     def query_density(self, x, return_feat: bool = False):
-        if self.unbounded:
+        if self.unbounded == 1:
             x = contract_to_unisphere(x, self.aabb)
-        else:
+        elif self.unbounded == 0 or self.unbounded == 2:
             aabb_min, aabb_max = torch.split(self.aabb, self.num_dim, dim=-1)
             x = (x - aabb_min) / (aabb_max - aabb_min)
         selector = ((x > 0.0) & (x < 1.0)).all(dim=-1)
@@ -182,6 +183,8 @@ class NGPRadianceField(torch.nn.Module):
     def _query_rgb(self, dir, embedding, apply_act: bool = True):
         # tcnn requires directions in the range [0, 1]
         if self.use_viewdirs:
+            if self.unbounded == 2:
+                dir = dir / torch.linalg.norm(dir, dim=-1, keepdim=True)
             dir = (dir + 1.0) / 2.0
             d = self.direction_encoding(dir.reshape(-1, dir.shape[-1]))
             d = (d - d.mean(-1, keepdim=True)) / (d.std(-1, keepdim=True) + torch.finfo(torch.float16).eps)
@@ -220,7 +223,7 @@ class NGPDensityField(torch.nn.Module):
         aabb: Union[torch.Tensor, List[float]],
         num_dim: int = 3,
         density_activation: Callable = lambda x: trunc_exp(x - 1),
-        unbounded: bool = False,
+        unbounded: int = 0,
         base_resolution: int = 16,
         max_resolution: int = 128,
         n_levels: int = 5,
@@ -263,9 +266,9 @@ class NGPDensityField(torch.nn.Module):
         )
 
     def forward(self, positions: torch.Tensor):
-        if self.unbounded:
+        if self.unbounded == 1:
             positions = contract_to_unisphere(positions, self.aabb)
-        else:
+        elif self.unbounded == 0 or self.unbounded == 2:
             aabb_min, aabb_max = torch.split(self.aabb, self.num_dim, dim=-1)
             positions = (positions - aabb_min) / (aabb_max - aabb_min)
         selector = ((positions > 0.0) & (positions < 1.0)).all(dim=-1)

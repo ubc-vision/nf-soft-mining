@@ -10,6 +10,7 @@ import imageio.v2 as imageio
 import numpy as np
 import torch
 import torch.nn.functional as F
+from .lmc import LMC
 
 from .utils import Rays, sample_from_pdf_with_indices, \
                    compute_sobel_edge, Image
@@ -133,29 +134,14 @@ class SubjectLoader(torch.utils.data.Dataset):
         if self.training:
             bs = np.ceil(self.num_rays / self.images.shape[0]).astype(np.int32) 
             self.num_rays = bs * self.images.shape[0]
-            self.const_img_id = torch.arange(0, self.images.shape[0], device=device).repeat_interleave(bs)
 
-        if self.sampling_type == "lmc":
-            self.image_edges = compute_sobel_edge(self.images.float()).reshape(self.images.shape[0], -1)
-            self.image_edges = self.image_edges.to(device)
-            probs = self.image_edges / self.image_edges.sum(dim=-1, keepdim=True)
-            cdf = torch.cumsum(probs, dim=-1)
-            cdf = torch.nn.functional.pad(cdf, pad=(1, 0), mode='constant', value=0)
-            self.cdf = cdf.view(cdf.shape[0], -1)
-
-            self.rand_ten = torch.empty((self.num_rays, 2), dtype=torch.float32, device=device)
-            self.noise = torch.empty((self.num_rays, 2), dtype=torch.float32, device=device)
-
-            self.u_num = int(minpct * self.num_rays)
-            self.reinit = int(lossminpc * self.num_rays)
-            self.prev_samples = None
-            x = torch.randint(0, self.WIDTH, size=(self.num_rays,), device=device)
-            y = torch.randint(0, self.HEIGHT, size=(self.num_rays,), device=device)
-            x = x.float() / (self.WIDTH - 1)
-            y = y.float() / (self.HEIGHT - 1)
-            self.prev_samples = torch.cat([y[..., None], x[..., None]], dim=1)
-            self.prev_samples.clamp_(min=0.0, max=1.0)
-            self.HW = torch.tensor([self.HEIGHT-1, self.WIDTH-1], device=device)
+            if self.num_rays != num_rays:
+                print("Warning: num_rays is not divisible by number of images. Setting num_rays to %d" % self.num_rays)
+            
+            if sampling_type == "lmc":
+                self.const_img_id = torch.arange(0, self.images.shape[0], device=device).repeat_interleave(bs)
+                self.lmc = LMC(images=self.images, num_rays=self.num_rays, const_img_id=self.const_img_id, 
+                            device=device, minpct=minpct, lossminpc=lossminpc)
 
     def __len__(self):
         return len(self.images)
@@ -269,37 +255,8 @@ class SubjectLoader(torch.utils.data.Dataset):
             "rays": rays,  # [h, w, 3] or [num_rays, 3]
         }
 
-    def fetch_data_lmc(self, net_grad=None, a=2e1, b=2e-2, loss_per_pix=None):
-        if net_grad is not None:
-            with torch.no_grad():
-                self.noise.normal_(mean=0.0, std=1.0)
-                self.rand_ten.uniform_()
-
-                net_grad.mul_(a).add_(self.noise, alpha=b)
-                self.prev_samples.add_(net_grad)
-
-                threshold, _ = torch.topk(loss_per_pix, self.reinit+1, largest=False)
-                mask = loss_per_pix <= threshold[-1]
-                mask = torch.cat([self.prev_samples < 0, 
-                                  self.prev_samples > 1,
-                                  loss_per_pix.unsqueeze(1) <= threshold[-1]
-                                 ], 1)
-                mask = mask.sum(1)
-                bound_idxs = torch.where(mask)[0]
-                self.prev_samples[-self.u_num:].copy_(self.rand_ten[-self.u_num:])
-                
-                if bound_idxs.shape[0] > 0:
-                    # sample from edges
-                    count = torch.bincount(self.const_img_id[bound_idxs], minlength=self.images.shape[0])
-                    batch1d = sample_from_pdf_with_indices(self.cdf, int(self.num_rays / self.images.shape[0]))
-                    indices = torch.arange(batch1d.size(1), device=batch1d.device).unsqueeze_(0).repeat(batch1d.size(0), 1)
-                    mask = indices < count.unsqueeze(1)        
-                    batch1d = batch1d.masked_select(mask)
-
-                    self.prev_samples[bound_idxs, 0] = (batch1d // self.WIDTH) / (self.HEIGHT - 1) 
-                    self.prev_samples[bound_idxs, 1] = (batch1d % self.WIDTH) / (self.WIDTH - 1)
-                self.prev_samples.clamp_(min=0.0, max=1.0)
-        points_2d = self.prev_samples *  self.HW
+    def fetch_data_lmc(self, net_grad=None, loss_per_pix=None):
+        points_2d = self.lmc(net_grad, loss_per_pix)
         points_2d.round_()     
 
         # generate rays
@@ -308,14 +265,9 @@ class SubjectLoader(torch.utils.data.Dataset):
         x, y = points_2d[:, 1], points_2d[:, 0]
         origins, viewdirs = self.get_origin_viewdirs(self.const_img_id, y, x)
 
-        if self.training:
-            origins = torch.reshape(origins, (self.num_rays, 3))
-            viewdirs = torch.reshape(viewdirs, (self.num_rays, 3))
-            rgba = torch.reshape(rgba, (self.num_rays, 4))
-        else:
-            origins = torch.reshape(origins, (self.HEIGHT, self.WIDTH, 3))
-            viewdirs = torch.reshape(viewdirs, (self.HEIGHT, self.WIDTH, 3))
-            rgba = torch.reshape(rgba, (self.HEIGHT, self.WIDTH, 4))
+        origins = torch.reshape(origins, (self.num_rays, 3))
+        viewdirs = torch.reshape(viewdirs, (self.num_rays, 3))
+        rgba = torch.reshape(rgba, (self.num_rays, 4))
 
         rays = Rays(origins=origins, viewdirs=viewdirs)
 

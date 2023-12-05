@@ -16,9 +16,10 @@ from lpips import LPIPS
 from radiance_fields.ngp import NGPDensityField, NGPRadianceField
 from losses import NeRFLoss
 from schedulers import create_scheduler
+torch.autograd.set_detect_anomaly(True)
 
 from examples.utils import (
-    MIPNERF360_UNBOUNDED_SCENES,
+    LLFF_NDC_SCENES,
     NERF_SYNTHETIC_SCENES,
     render_image_with_propnet,
     set_random_seed,
@@ -32,8 +33,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--data_root",
     type=str,
-    # default=str(pathlib.Path.cwd() / "data/360_v2"),
-    default=str("../../data/nerf_synthetic"),
+    default=str("/ubc/cs/research/kmyi/shakiba/g/data/nerf_llff_data"),
+    # default=str("../../data/nerf_synthetic"),
     help="the root dir of the dataset",
 )
 parser.add_argument(
@@ -46,8 +47,8 @@ parser.add_argument(
 parser.add_argument(
     "--scene",
     type=str,
-    default="lego",
-    choices=NERF_SYNTHETIC_SCENES + MIPNERF360_UNBOUNDED_SCENES,
+    default="trex",
+    choices=NERF_SYNTHETIC_SCENES + LLFF_NDC_SCENES,
     help="which scene to use",
 )
 parser.add_argument(
@@ -59,12 +60,7 @@ parser.add_argument(
     "--sampling_type",
     type=str,
     choices=["uniform", "lmc"],
-    default="uniform",
-)
-parser.add_argument(
-    "--alpha",
-    type=float,
-    default=0.6,
+    default="lmc",
 )
 parser.add_argument(
     "--i_print",
@@ -76,26 +72,36 @@ parser.add_argument(
     type=str,
     default="cosineannealing",
 )
+parser.add_argument(
+    "--minpct",
+    type=float,
+    default=0.1,
+)
+parser.add_argument(
+    "--lossminpc",
+    type=float,
+    default=0.1,
+)
 args = parser.parse_args()
 
 device = "cuda:0"
 set_random_seed(42)
 
-if args.scene in MIPNERF360_UNBOUNDED_SCENES:
-    from datasets.nerf_360_v2 import SubjectLoader
-
-    # training parameters
+if args.scene in LLFF_NDC_SCENES:
+    from datasets.nerf_llff import SubjectLoader
+     # training parameters
     max_steps = 20000
     init_batch_size = 4096
-    weight_decay = 0.0
+    unbounded = 2
+    weight_decay = 1e-5 
     # scene parameters
-    unbounded = True
-    aabb = torch.tensor([-1.0, -1.0, -1.0, 1.0, 1.0, 1.0], device=device)
-    near_plane = 0.2  # TODO: Try 0.02
-    far_plane = 1e3
+    aabb = torch.tensor([-1.5, -1.5, -1.5, 1.5, 1.5, 1.5], device=device)
+    near_plane = 0
+    far_plane = 1
     # dataset parameters
-    train_dataset_kwargs = {"color_bkgd_aug": "random", "factor": 4}
-    test_dataset_kwargs = {"factor": 4}
+    train_dataset_kwargs = {"sampling_type": args.sampling_type, 
+                            "minpct": args.minpct, "lossminpc": args.lossminpc}
+    test_dataset_kwargs = {}
     # model parameters
     proposal_networks = [
         NGPDensityField(
@@ -104,19 +110,15 @@ if args.scene in MIPNERF360_UNBOUNDED_SCENES:
             n_levels=5,
             max_resolution=128,
         ).to(device),
-        NGPDensityField(
-            aabb=aabb,
-            unbounded=unbounded,
-            n_levels=5,
-            max_resolution=256,
-        ).to(device),
     ]
     # render parameters
-    num_samples = 48
-    num_samples_per_prop = [256, 96]
-    sampling_type = "lindisp"
-    opaque_bkgd = True
+    num_samples = 64
+    num_samples_per_prop = [128]
+    prop_sampling_type = "uniform"
+    opaque_bkgd = False
 
+    # lmc
+    alpha = 0.8
 else:
     from datasets.nerf_synthetic import SubjectLoader
 
@@ -132,7 +134,7 @@ else:
     near_plane = 2.0
     far_plane = 6.0
     # dataset parameters
-    train_dataset_kwargs = {"sampling_type": args.sampling_type}
+    train_dataset_kwargs = {"sampling_type": args.sampling_type, "minpct": args.minpct, "lossminpc": args.lossminpc}
     test_dataset_kwargs = {}
     # model parameters
     proposal_networks = [
@@ -146,8 +148,11 @@ else:
     # render parameters
     num_samples = 64
     num_samples_per_prop = [128]
-    sampling_type = "uniform"
+    prop_sampling_type = "uniform"
     opaque_bkgd = False
+
+    # lmc
+    alpha = 0.6
 
 train_dataset = SubjectLoader(
     subject_id=args.scene,
@@ -195,7 +200,7 @@ lpips_net = LPIPS(net="vgg").to(device)
 lpips_norm_fn = lambda x: x[None, ...].permute(0, 3, 1, 2) * 2 - 1
 lpips_fn = lambda x, y: lpips_net(lpips_norm_fn(x), lpips_norm_fn(y)).mean()
 
-loss_fn = NeRFLoss()
+loss_fn = NeRFLoss(lambda_distortion=1e-1, lambda_opacity=1e-3)
 
 gradval = None
 lossperpix_prev = None
@@ -209,7 +214,6 @@ for step in range(max_steps + 1):
     estimator.train()
 
     i = torch.randint(0, len(train_dataset), (1,)).item()
-    # data = train_dataset[i]
     data = train_dataset.__getitem__(i, net_grad=gradval, loss_per_pix=lossperpix_prev)
 
 
@@ -229,7 +233,7 @@ for step in range(max_steps + 1):
         num_samples_per_prop=num_samples_per_prop,
         near_plane=near_plane,
         far_plane=far_plane,
-        sampling_type=sampling_type,
+        sampling_type=prop_sampling_type,
         opaque_bkgd=opaque_bkgd,
         render_bkgd=render_bkgd,
         # train options
@@ -254,10 +258,10 @@ for step in range(max_steps + 1):
         if 'distorion' in loss_d:
             imp_loss = imp_loss + loss_d['distortion'].detach()
         correction = 1.0 / torch.clip(imp_loss, min=torch.finfo(torch.float16).eps).detach()
-        if args.alpha != 0:
-            r = min((step/1000), args.alpha)
+        if alpha != 0:
+            r = min((step/1000), alpha)
         else:
-            r = args.r
+            r = alpha
         correction.pow_(r)
         correction.clamp_(min=0.2, max=correction.mean()+correction.std())
         loss_per_pix.mul_(correction) 
@@ -315,7 +319,7 @@ for step in range(max_steps + 1):
                     num_samples_per_prop=num_samples_per_prop,
                     near_plane=near_plane,
                     far_plane=far_plane,
-                    sampling_type=sampling_type,
+                    sampling_type=prop_sampling_type,
                     opaque_bkgd=opaque_bkgd,
                     render_bkgd=render_bkgd,
                     # test options
