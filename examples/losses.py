@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
 
-from nerfacc.losses import DistortionLoss
 class NeRFLoss(nn.Module):
-    def __init__(self, lambda_opacity=0.0, lambda_distortion=0.01):
+    def __init__(self, lambda_opacity=0.0, lambda_distortion=0.0):
         super().__init__()
 
         self.lambda_opacity = lambda_opacity
@@ -18,9 +17,13 @@ class NeRFLoss(nn.Module):
             # encourage opacity to be either 0 or 1 to avoid floater
             d['opacity'] = self.lambda_opacity*(-o*torch.log(o))
 
-        if self.lambda_distortion > 0 and distkwargs is not None:
-            d['distortion'] = self.lambda_distortion * \
-                DistortionLoss.apply(distkwargs['ws'], distkwargs['deltas'],
-                                     distkwargs['ts'], distkwargs['rays_a'])
+        if self.lambda_distortion > 0:
+            raise NotImplementedError
+        # TODO(Shakiba): push distortion loss code to nerfacc
+        # if self.lambda_distortion > 0 and distkwargs is not None:
+        #     from nerfacc.losses import DistortionLoss
+        #     d['distortion'] = self.lambda_distortion * \
+        #         DistortionLoss.apply(distkwargs['ws'], distkwargs['deltas'],
+        #                              distkwargs['ts'], distkwargs['rays_a'])
 
         return d

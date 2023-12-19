@@ -33,8 +33,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--data_root",
     type=str,
-    default=str("/ubc/cs/research/kmyi/shakiba/g/data/nerf_llff_data"),
-    # default=str("../../data/nerf_synthetic"),
+    # default=str("../../data/nerf_llff_data"),
+    default=str("../../data/nerf_synthetic"),
     help="the root dir of the dataset",
 )
 parser.add_argument(
@@ -47,7 +47,7 @@ parser.add_argument(
 parser.add_argument(
     "--scene",
     type=str,
-    default="trex",
+    default="mic",
     choices=NERF_SYNTHETIC_SCENES + LLFF_NDC_SCENES,
     help="which scene to use",
 )
@@ -200,7 +200,7 @@ lpips_net = LPIPS(net="vgg").to(device)
 lpips_norm_fn = lambda x: x[None, ...].permute(0, 3, 1, 2) * 2 - 1
 lpips_fn = lambda x, y: lpips_net(lpips_norm_fn(x), lpips_norm_fn(y)).mean()
 
-loss_fn = NeRFLoss(lambda_distortion=1e-1, lambda_opacity=1e-3)
+loss_fn = NeRFLoss()
 
 gradval = None
 lossperpix_prev = None
