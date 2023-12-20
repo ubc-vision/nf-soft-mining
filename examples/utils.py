@@ -195,7 +195,7 @@ def render_image_with_propnet(
 
     def prop_sigma_fn(t_starts, t_ends, proposal_network):
         t_origins = chunk_rays.origins[..., None, :]
-        t_dirs = chunk_rays.viewdirs[..., None, :]
+        t_dirs = chunk_rays.viewdirs[..., None, :].detach()
         positions = t_origins + t_dirs * (t_starts + t_ends)[..., None] / 2.0
         sigmas = proposal_network(positions)
         if opaque_bkgd:
