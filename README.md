@@ -1,10 +1,22 @@
-# (CVPR 2024) Accelerating Neural Field Training via Soft Mining
+<p align="center">
 
-<!-- [![Project Page](https://img.shields.io/badge/-Project%20Page-blue?style=flat-square)](https://ubc-vision.github.io/nf-soft-mining/) [![arXiv Paper](https://img.shields.io/badge/arXiv-Paper-orange?style=flat-square)](https://arxiv.org/abs/2312.00075) -->
+  <h1 align="center">Accelerating Neural Field Training via Soft Mining</h1>
+  <p align="center">
+        <a href="https://shakibakh.github.io/">Shakiba Kheradmand</a>,
+        <a href="http://drebain.com/"> Daniel Rebain</a>,
+        <a href="https://hippogriff.github.io/"> Gopal Sharma</a>,
+        <a href="https://wsunid.github.io/"> Weiwei Sun</a>,
+        <a href="https://scholar.google.com/citations?user=1iJfq7YAAAAJ&hl=en"> Yang-Che Tseng</a>,
+        <a href="http://www.hossamisack.com/">Hossam Isack</a>,
+        <a href="https://abhishekkar.info/">Abhishek Kar</a>,
+        <a href="https://taiya.github.io/">Andrea Tagliasacchi</a>,
+        <a href="https://www.cs.ubc.ca/~kmyi/">Kwang Moo Yi</a>
+  </p>
+  <h2 align="center">CVPR 2024</h2>
 
-<a href="https://ubc-vision.github.io/nf-soft-mining/" style="background-color: blue; color: white; padding: 10px 20px; text-decoration: none; font-size: 20px; font-weight: bold; border-radius: 5px;">Project Page</a>
-<a href="https://arxiv.org/abs/2312.00075" style="background-color: orange; color: white; padding: 10px 20px; text-decoration: none; font-size: 20px; font-weight: bold; border-radius: 5px;">arXiv </a>
-<a href="https://openaccess.thecvf.com/content/CVPR2024/papers/Kheradmand_Accelerating_Neural_Field_Training_via_Soft_Mining_CVPR_2024_paper.pdf" style="background-color: green; color: white; padding: 10px 20px; text-decoration: none; font-size: 20px; font-weight: bold; border-radius: 5px;">CVPR</a>
+  <h3 align="center"><a href="https://arxiv.org/abs/2312.00075">arXiv</a> | <a href="https://openaccess.thecvf.com/content/CVPR2024/papers/Kheradmand_Accelerating_Neural_Field_Training_via_Soft_Mining_CVPR_2024_paper.pdf">CVPR</a> | <a href="https://ubc-vision.github.io/nf-soft-mining/">Project Page</a>  </h3>
+  <div align="center"></div>
+</p>
 
 ## Overview
 This repository contains the implementation and resources for our research paper ["Accelerating Neural Field Training via Soft Mining"](https://arxiv.org/abs/2312.00075) which was accepted at CVPR 2024. 
