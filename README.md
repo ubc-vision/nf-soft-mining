@@ -5,8 +5,6 @@
         <a href="https://shakibakh.github.io/">Shakiba Kheradmand</a>,
         <a href="http://drebain.com/"> Daniel Rebain</a>,
         <a href="https://hippogriff.github.io/"> Gopal Sharma</a>,
-        <a href="https://wsunid.github.io/"> Weiwei Sun</a>,
-        <a href="https://scholar.google.com/citations?user=1iJfq7YAAAAJ&hl=en"> Yang-Che Tseng</a>,
         <a href="http://www.hossamisack.com/">Hossam Isack</a>,
         <a href="https://abhishekkar.info/">Abhishek Kar</a>,
         <a href="https://taiya.github.io/">Andrea Tagliasacchi</a>,
