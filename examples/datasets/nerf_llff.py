@@ -483,18 +483,14 @@ class SubjectLoader(torch.utils.data.Dataset):
         """Process the fetched / cached data with randomness."""
         pixels, rays = data["rgb"], data["rays"]
 
-        if self.training:
-            if self.color_bkgd_aug == "random":
-                color_bkgd = torch.rand(3, device=self.images.device)
-            elif self.color_bkgd_aug == "white":
-                color_bkgd = torch.ones(3, device=self.images.device)
-            elif self.color_bkgd_aug == "black":
-                color_bkgd = torch.zeros(3, device=self.images.device)
-            elif self.color_bkgd_aug == "gray":
-                color_bkgd = torch.ones(3, device=self.images.device) * 0.5
-        else:
-            # just use white during inference
+        if self.color_bkgd_aug == "random":
+            color_bkgd = torch.rand(3, device=self.images.device)
+        elif self.color_bkgd_aug == "white":
             color_bkgd = torch.ones(3, device=self.images.device)
+        elif self.color_bkgd_aug == "black":
+            color_bkgd = torch.zeros(3, device=self.images.device)
+        elif self.color_bkgd_aug == "gray":
+            color_bkgd = torch.ones(3, device=self.images.device) * 0.5
 
         return {
             "pixels": pixels,  # [n_rays, 3] or [h, w, 3]

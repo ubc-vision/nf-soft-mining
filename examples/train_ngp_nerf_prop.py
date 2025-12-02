@@ -277,7 +277,7 @@ for step in range(max_steps + 1):
         with torch.no_grad():            
             net_grad = data['points_2d'].grad.detach()
             loss_per_pix = loss_per_pix.detach()
-            net_grad = net_grad / ((grad_scaler._scale * (correction * loss_per_pix).unsqueeze(1))+ torch.finfo(net_grad.dtype).eps)
+            net_grad = net_grad / ((grad_scaler._scale * (loss_per_pix).unsqueeze(1))+ torch.finfo(net_grad.dtype).eps)
             gradval = net_grad
             lossperpix_prev = loss_per_pix
 
